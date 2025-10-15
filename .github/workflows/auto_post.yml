@@ -1,0 +1,23 @@
+name: Run Poster (manual)
+
+
+on:
+workflow_dispatch: {}
+
+
+jobs:
+run:
+runs-on: ubuntu-latest
+steps:
+- uses: actions/checkout@v4
+- uses: actions/setup-python@v5
+with:
+python-version: '3.11'
+- run: |
+pip install -r requirements.txt
+python app.py
+env:
+OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+FB_APP_ID: ${{ secrets.FB_APP_ID }}
+FB_APP_SECRET: ${{ secrets.FB_APP_SECRET }}
+BASE_URL: ${{ secrets.BASE_URL }}
