@@ -1,0 +1,110 @@
+AI Agents
+Generative AI for Marketing
+LLM Fine-Tuning
+RAG Architectures
+Prompt Engineering
+Vector Databases
+Knowledge Graphs
+Multimodal AI
+Speech-to-Text
+Text-to-Speech
+Computer Vision
+MLOps
+Model Monitoring
+AI Governance
+Data Labeling
+Synthetic Data
+Federated Learning
+Differential Privacy
+Edge AI
+TinyML
+AutoML
+Explainable AI
+Reinforcement Learning
+Transformers
+Graph Neural Networks
+Time Series Forecasting
+Anomaly Detection
+NLP in Healthcare
+AI in Finance
+Responsible AI
+AI Security
+Adversarial ML
+Model Compression
+Model Distillation
+Quantization
+On-Device AI
+Cloud Computing
+Serverless
+Kubernetes
+Docker & Containers
+Microservices
+Service Mesh
+API Gateways
+Observability
+Distributed Tracing
+Logging Best Practices
+Site Reliability Engineering (SRE)
+DevOps CI/CD
+Infrastructure as Code
+Terraform
+GitOps
+Argo CD
+Platform Engineering
+FinOps
+Multi-Cloud Strategy
+Cloud Cost Optimization
+Edge Computing (Architecture)
+5G & MEC
+IoT Security
+Digital Twins
+Event-Driven Architectures
+Apache Kafka & Streams
+Real-Time Analytics
+Data Engineering
+Data Lakes vs Lakehouses
+Delta Lake
+Apache Spark
+Airflow Orchestration
+ETL vs ELT
+Data Quality & Lineage
+Metadata Management
+Feature Stores
+Data Catalogs
+BI Dashboards
+Product Analytics
+A/B Testing & Experimentation
+Feature Flags
+Growth Engineering
+Web Performance Optimization
+Core Web Vitals
+Progressive Web Apps
+WebAssembly
+JAMstack
+Headless CMS
+SEO for Developers
+Accessibility (a11y)
+Flutter for Mobile
+React Native
+SwiftUI
+Android Jetpack Compose
+GraphQL
+gRPC
+WebSockets
+Zero Trust Security
+OAuth2 & OpenID Connect
+JWT Best Practices
+Secrets Management
+Software Supply Chain Security (SBOM)
+SAST & DAST
+Container Security
+Kubernetes Security
+Backup & Disaster Recovery
+Incident Response
+Blockchain Basics
+Smart Contracts
+Web3 Use Cases
+AR/VR & Spatial Computing
+Quantum Computing 101
+Green Software Engineering
+Sustainable IT
