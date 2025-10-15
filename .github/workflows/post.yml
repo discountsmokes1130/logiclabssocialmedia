@@ -6,28 +6,32 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # needed so the job can commit the image back to the repo
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true   # needed for git push
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install deps
         run: |
-          pip install openai==1.51.2 requests==2.32.3 pillow==10.4.0
+          python -m pip install --upgrade pip
+          pip install "httpx==0.27.2" \
+                      "openai==1.51.2" \
+                      "requests==2.32.3" \
+                      "pillow==10.4.0"
 
       - name: Run poster
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
-          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
-          IG_USER_ID: ${{ secrets.IG_USER_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/poster.py
