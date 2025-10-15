@@ -1,20 +1,24 @@
----
-name: Run Poster (manual)
-on: null
-workflow_dispatch: {}
+name: Auto Tech Post
+
+on:
+  schedule:
+    - cron: '30 4 * * *'   # 9:30 AM IST
+  workflow_dispatch:
+
 jobs:
-  run: null
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with: null
-      python-version: "3.11"
-    - run: |
-        pip install -r requirements.txt
-        python app.py
-      env: null
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      FB_APP_ID: ${{ secrets.FB_APP_ID }}
-      FB_APP_SECRET: ${{ secrets.FB_APP_SECRET }}
-      BASE_URL: ${{ secrets.BASE_URL }}
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Start app (short run)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FB_APP_ID: ${{ secrets.FB_APP_ID }}
+          FB_APP_SECRET: ${{ secrets.FB_APP_SECRET }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: python app.py
