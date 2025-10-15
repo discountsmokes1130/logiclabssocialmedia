@@ -50,26 +50,22 @@ def try_openai_image(topic: str) -> Optional[bytes]:
         return base64.b64decode(b64)
     except Exception as e:
         print("OpenAI error:", e, file=sys.stderr)
-        # Common error you saw: billing_hard_limit_reached
         return None
 
 def make_fallback_image(topic: str) -> bytes:
-    """Create a 1024x1024 gradient image with overlaid topic text (no OpenAI needed)."""
+    """Create a 1024x1024 gradient image with topic text (no OpenAI needed)."""
     W = H = 1024
     img = Image.new("RGB", (W, H), (12, 22, 38))
+    draw = ImageDraw.Draw(img)
 
     # gradient background
     for y in range(H):
         r = int(12 + (y / H) * 40)
         g = int(22 + (y / H) * 60)
         b = int(38 + (y / H) * 80)
-        ImageDraw.Draw(img).line([(0, y), (W, y)], fill=(r, g, b))
+        draw.line([(0, y), (W, y)], fill=(r, g, b))
 
-    draw = ImageDraw.Draw(img)
-
-    # header bar
-    draw.rectangle([0, 0, W, 100], fill=(20, 40, 80))
-    # title
+    # fonts
     try:
         title_font = ImageFont.truetype("DejaVuSans-Bold.ttf", 42)
         topic_font = ImageFont.truetype("DejaVuSans.ttf", 48)
@@ -79,6 +75,8 @@ def make_fallback_image(topic: str) -> bytes:
         topic_font = ImageFont.load_default()
         small_font = ImageFont.load_default()
 
+    # header
+    draw.rectangle([0, 0, W, 100], fill=(20, 40, 80))
     title = "Tech Byte"
     tw, th = draw.textbbox((0, 0), title, font=title_font)[2:]
     draw.text(((W - tw) // 2, 30), title, font=title_font, fill=(255, 255, 255))
@@ -86,13 +84,13 @@ def make_fallback_image(topic: str) -> bytes:
     # topic box
     box_w, box_h = int(W * 0.86), 300
     box_x, box_y = (W - box_w) // 2, (H - box_h) // 2
-    draw.rounded_rectangle([box_x, box_y, box_x + box_w, box_y + box_h], radius=24, fill=(255, 255, 255, 230))
+    draw.rounded_rectangle([box_x, box_y, box_x + box_w, box_y + box_h], radius=24, fill=(255, 255, 255))
 
     # wrap topic
     def wrap(text, width=20):
         words, lines, cur = text.split(), [], ""
         for w in words:
-            if len(cur + " " + w) <= width:
+            if len((cur + " " + w).strip()) <= width:
                 cur = (cur + " " + w).strip()
             else:
                 lines.append(cur); cur = w
@@ -104,19 +102,16 @@ def make_fallback_image(topic: str) -> bytes:
     draw.multiline_text((W // 2 - tw2 // 2, box_y + (box_h - th2) // 2),
                         topic_wrapped, font=topic_font, fill=(20, 20, 20), spacing=6)
 
-    # date footer
+    # footer date
     date_txt = dt.datetime.utcnow().strftime("%b %d, %Y")
-    draw.rectangle([0, H - 70, W, H], fill=(0, 0, 0, 160))
-    ddw, ddh = draw.textbbox((0, 0), date_txt, font=small_font)[2:]
+    draw.rectangle([0, H - 70, W, H], fill=(0, 0, 0))
     draw.text((20, H - 50), date_txt, font=small_font, fill=(255, 255, 255))
 
-    # bytes
     buf = io.BytesIO()
     img.save(buf, "JPEG", quality=90)
     return buf.getvalue()
 
 def make_image_bytes(topic: str) -> bytes:
-    """Try OpenAI; fallback to local generated JPEG if OpenAI fails."""
     b = try_openai_image(topic)
     if b is not None:
         return b
@@ -136,23 +131,21 @@ def git_commit_and_push(path: pathlib.Path, message: str):
     subprocess.run(["git", "commit", "-m", message], check=False)
     subprocess.run(["git", "push"], check=True)
 
-# ====== Posting helpers ======
-def post_facebook(page_id: str, page_token: str, image_url: str, message: str):
-    r = requests.post(f"{GRAPH}/{page_id}/photos", data={
-        "url": image_url,
-        "message": message,
-        "access_token": page_token
-    }, timeout=60)
+# ====== Facebook / Instagram posting ======
+def post_facebook_upload(page_id: str, page_token: str, image_path: str, message: str):
+    """Upload the local image file directly to the Page (reliable)."""
+    with open(image_path, "rb") as f:
+        files = {"source": ("post.jpg", f, "image/jpeg")}
+        data = {"message": message, "access_token": page_token, "published": "true"}
+        r = requests.post(f"{GRAPH}/{page_id}/photos", data=data, files=files, timeout=120)
     try:
-        print("FB:", r.status_code, r.json())
+        print("FB upload:", r.status_code, r.json())
     except Exception:
-        print("FB:", r.status_code, r.text[:400])
+        print("FB upload:", r.status_code, r.text[:400])
 
 def post_instagram(ig_user_id: str, page_token: str, image_url: str, caption: str):
     c = requests.post(f"{GRAPH}/{ig_user_id}/media", data={
-        "image_url": image_url,
-        "caption": caption,
-        "access_token": page_token
+        "image_url": image_url, "caption": caption, "access_token": page_token
     }, timeout=60)
     try:
         data = c.json()
@@ -161,11 +154,10 @@ def post_instagram(ig_user_id: str, page_token: str, image_url: str, caption: st
     print("IG create:", c.status_code, str(data)[:400])
     creation_id = (data or {}).get("id")
     if not creation_id:
-        print("IG error: no creation_id returned. Check IG_USER_ID and Page token scopes.", file=sys.stderr)
+        print("IG error: no creation_id returned. Check IG_USER_ID and token scopes.", file=sys.stderr)
         return
     p = requests.post(f"{GRAPH}/{ig_user_id}/media_publish", data={
-        "creation_id": creation_id,
-        "access_token": page_token
+        "creation_id": creation_id, "access_token": page_token
     }, timeout=60)
     try:
         print("IG publish:", p.status_code, p.json())
@@ -182,18 +174,22 @@ def main():
     caption = f"Tech Byte: {topic}\n#technology #ai #cloud #devops"
     print("Topic:", topic)
 
+    # 1) Make & save image
     img_bytes = make_image_bytes(topic)
     path = save_image(img_bytes)
     print("Saved:", path)
 
+    # 2) Commit & push so the raw URL is valid (for IG)
+    git_commit_and_push(path, f"add image {path.name}")
+
+    # 3) Facebook — upload file directly (no URL fetch needed)
+    post_facebook_upload(FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN, str(path), caption)
+
+    # 4) Instagram — requires a public URL
     owner, repo = os.environ["GITHUB_REPOSITORY"].split("/")
     branch = os.environ.get("GITHUB_REF_NAME", "main")
     raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/Images/{path.name}"
     print("Public URL:", raw_url)
-
-    git_commit_and_push(path, f"add image {path.name}")
-
-    post_facebook(FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN, raw_url, caption)
     post_instagram(IG_USER_ID, FB_PAGE_ACCESS_TOKEN, raw_url, caption)
 
 if __name__ == "__main__":
